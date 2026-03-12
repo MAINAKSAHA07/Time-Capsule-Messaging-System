@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Time Capsule Messaging</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #1f2933, #020617);
+        color: #e5e7eb;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 2rem 1rem;
+      }
+      .app {
+        width: 100%;
+        max-width: 960px;
+        background: rgba(15, 23, 42, 0.92);
+        border-radius: 1.25rem;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        box-shadow: 0 24px 80px rgba(15, 23, 42, 0.9);
+        padding: 2rem 2.5rem;
+        backdrop-filter: blur(18px);
+      }
+      h1 {
+        margin-top: 0;
+        font-size: 2rem;
+        letter-spacing: 0.04em;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+      h1 span.badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #9ca3af;
+      }
+      .subtitle {
+        margin-bottom: 1.75rem;
+        color: #9ca3af;
+        font-size: 0.9rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr);
+        gap: 1.75rem;
+      }
+      @media (max-width: 800px) {
+        .app {
+          padding: 1.5rem 1.25rem;
+        }
+        .grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      section {
+        border-radius: 1rem;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        padding: 1.25rem 1.5rem;
+        background: radial-gradient(circle at top left, rgba(55, 65, 81, 0.65), rgba(15, 23, 42, 0.95));
+      }
+      section h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1.05rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #e5e7eb;
+      }
+      label {
+        display: block;
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+        color: #9ca3af;
+      }
+      input,
+      textarea {
+        width: 100%;
+        border-radius: 0.6rem;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        padding: 0.55rem 0.65rem;
+        font-size: 0.9rem;
+        background: rgba(15, 23, 42, 0.8);
+        color: #e5e7eb;
+        outline: none;
+      }
+      input:focus,
+      textarea:focus {
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 1px #38bdf8;
+      }
+      textarea {
+        min-height: 70px;
+        resize: vertical;
+      }
+      .field {
+        margin-bottom: 0.7rem;
+      }
+      button {
+        border-radius: 999px;
+        border: none;
+        padding: 0.5rem 1.1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: linear-gradient(135deg, #38bdf8, #6366f1);
+        color: #0b1120;
+        box-shadow: 0 6px 20px rgba(56, 189, 248, 0.55);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      button.secondary {
+        background: transparent;
+        color: #e5e7eb;
+        border: 1px solid rgba(148, 163, 184, 0.7);
+        box-shadow: none;
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: default;
+        box-shadow: none;
+      }
+      .row {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 0.4rem;
+      }
+      .status {
+        font-size: 0.8rem;
+        color: #9ca3af;
+      }
+      .token-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        border: 1px dashed rgba(148, 163, 184, 0.8);
+        color: #e5e7eb;
+        margin-top: 0.35rem;
+        max-width: 100%;
+        word-break: break-all;
+      }
+      .messages-list {
+        margin-top: 0.6rem;
+        max-height: 340px;
+        overflow: auto;
+        padding-right: 0.25rem;
+      }
+      .message-card {
+        border-radius: 0.85rem;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        padding: 0.6rem 0.7rem;
+        font-size: 0.82rem;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 64, 175, 0.7));
+        margin-bottom: 0.5rem;
+      }
+      .message-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.4rem;
+        margin-bottom: 0.25rem;
+      }
+      .badge {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.7);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .badge.pending {
+        border-color: #fbbf24;
+        color: #fde68a;
+      }
+      .badge.delivered {
+        border-color: #4ade80;
+        color: #bbf7d0;
+      }
+      .muted {
+        color: #9ca3af;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <h1>
+        Time Capsule Console
+        <span class="badge">API tester</span>
+      </h1>
+      <p class="subtitle">
+        Use this panel to register or log in, then schedule messages into the future and watch them auto‑deliver.
+      </p>
+      <div class="grid">
+        <section>
+          <h2>1. Authentication</h2>
+          <div class="field">
+            <label for="baseUrl">API base URL</label>
+            <input id="baseUrl" type="text" value="http://localhost:3000" />
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@example.com" />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="••••••••" />
+          </div>
+          <div class="row">
+            <button id="registerBtn" type="button">Register</button>
+            <button id="loginBtn" type="button" class="secondary">Login</button>
+            <span id="authStatus" class="status"></span>
+          </div>
+          <div id="tokenContainer" class="token-pill" style="display: none">
+            <span>JWT</span>
+            <span id="tokenValue" class="mono"></span>
+          </div>
+        </section>
+
+        <section>
+          <h2>2. Schedule Message</h2>
+          <div class="field">
+            <label for="recipient">Recipient email</label>
+            <input id="recipient" type="email" placeholder="friend@example.com" />
+          </div>
+          <div class="field">
+            <label for="message">Message (max 500 chars)</label>
+            <textarea id="message" maxlength="500" placeholder="Hello from the past..."></textarea>
+          </div>
+          <div class="field">
+            <label for="deliverAt">Deliver at (UTC ISO)</label>
+            <input id="deliverAt" type="datetime-local" />
+          </div>
+          <div class="row">
+            <button id="createMsgBtn" type="button">Create message</button>
+            <button id="refreshBtn" type="button" class="secondary">Refresh list</button>
+            <span id="msgStatus" class="status"></span>
+          </div>
+          <div class="messages-list" id="messagesList"></div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const state = {
+        token: null
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      const baseUrlInput = $("baseUrl");
+      const emailInput = $("email");
+      const passwordInput = $("password");
+      const authStatus = $("authStatus");
+      const tokenContainer = $("tokenContainer");
+      const tokenValue = $("tokenValue");
+
+      const recipientInput = $("recipient");
+      const messageInput = $("message");
+      const deliverAtInput = $("deliverAt");
+      const msgStatus = $("msgStatus");
+      const messagesList = $("messagesList");
+
+      function setAuthStatus(text, isError) {
+        authStatus.textContent = text;
+        authStatus.style.color = isError ? "#fca5a5" : "#9ca3af";
+      }
+
+      function setMsgStatus(text, isError) {
+        msgStatus.textContent = text;
+        msgStatus.style.color = isError ? "#fca5a5" : "#9ca3af";
+      }
+
+      function setToken(token) {
+        state.token = token;
+        if (token) {
+          tokenValue.textContent = token;
+          tokenContainer.style.display = "inline-flex";
+        } else {
+          tokenValue.textContent = "";
+          tokenContainer.style.display = "none";
+        }
+      }
+
+      async function callApi(path, options = {}) {
+        const base = baseUrlInput.value.trim().replace(/\/+$/, "");
+        const url = base + path;
+
+        const headers = {
+          "Content-Type": "application/json",
+          ...(options.headers || {})
+        };
+
+        if (state.token) {
+          headers.Authorization = `Bearer ${state.token}`;
+        }
+
+        const res = await fetch(url, {
+          method: options.method || "GET",
+          headers,
+          body: options.body ? JSON.stringify(options.body) : undefined
+        });
+
+        let data = null;
+        try {
+          data = await res.json();
+        } catch {
+          // ignore non-json
+        }
+
+        if (!res.ok) {
+          const errMsg = (data && data.error) || `HTTP ${res.status}`;
+          throw new Error(errMsg);
+        }
+
+        return data;
+      }
+
+      $("registerBtn").addEventListener("click", async () => {
+        setAuthStatus("Registering...", false);
+        try {
+          const data = await callApi("/auth/register", {
+            method: "POST",
+            body: {
+              email: emailInput.value,
+              password: passwordInput.value
+            }
+          });
+          setToken(data.token);
+          setAuthStatus("Registered and logged in.", false);
+        } catch (err) {
+          setAuthStatus(err.message || "Registration failed", true);
+        }
+      });
+
+      $("loginBtn").addEventListener("click", async () => {
+        setAuthStatus("Logging in...", false);
+        try {
+          const data = await callApi("/auth/login", {
+            method: "POST",
+            body: {
+              email: emailInput.value,
+              password: passwordInput.value
+            }
+          });
+          setToken(data.token);
+          setAuthStatus("Logged in.", false);
+        } catch (err) {
+          setAuthStatus(err.message || "Login failed", true);
+        }
+      });
+
+      $("createMsgBtn").addEventListener("click", async () => {
+        setMsgStatus("Creating message...", false);
+        try {
+          if (!state.token) {
+            throw new Error("Please log in first.");
+          }
+
+          const localValue = deliverAtInput.value;
+          if (!localValue) {
+            throw new Error("Please set a delivery time.");
+          }
+          const iso = new Date(localValue).toISOString();
+
+          await callApi("/messages", {
+            method: "POST",
+            body: {
+              recipient_email: recipientInput.value,
+              message: messageInput.value,
+              deliver_at: iso
+            }
+          });
+          setMsgStatus("Message scheduled.", false);
+          await loadMessages();
+        } catch (err) {
+          setMsgStatus(err.message || "Failed to create message", true);
+        }
+      });
+
+      $("refreshBtn").addEventListener("click", async () => {
+        setMsgStatus("Refreshing...", false);
+        try {
+          await loadMessages();
+          setMsgStatus("Messages updated.", false);
+        } catch (err) {
+          setMsgStatus(err.message || "Failed to fetch messages", true);
+        }
+      });
+
+      async function loadMessages() {
+        if (!state.token) {
+          messagesList.innerHTML = '<p class="muted">Log in to see your messages.</p>';
+          return;
+        }
+        const data = await callApi("/messages");
+        if (!data.length) {
+          messagesList.innerHTML = '<p class="muted">No messages yet.</p>';
+          return;
+        }
+        messagesList.innerHTML = data
+          .map((m) => {
+            const statusClass = m.status === "delivered" ? "delivered" : "pending";
+            const deliverAt = new Date(m.deliver_at).toLocaleString();
+            const deliveredAt = m.delivered_at ? new Date(m.delivered_at).toLocaleString() : "—";
+            return `
+              <div class="message-card">
+                <div class="message-header">
+                  <span class="mono">${m.recipient_email}</span>
+                  <span class="badge ${statusClass}">${m.status}</span>
+                </div>
+                <div>${m.message}</div>
+                <div class="muted" style="margin-top:0.25rem">
+                  <span>Deliver at: ${deliverAt}</span><br/>
+                  <span>Delivered at: ${deliveredAt}</span>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      // Prefill deliverAt with 5 minutes in the future
+      (function initDefaults() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 5);
+        const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 16);
+        deliverAtInput.value = local;
+      })();
+    </script>
+  </body>
+  </html>
+
