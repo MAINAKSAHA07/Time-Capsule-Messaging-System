@@ -50,6 +50,9 @@ async function deliverDueMessagesOnce() {
       console.error('Failed to send email for message', msg.id, err);
       // Leave as pending so it can be retried on the next cycle.
     }
+    // Resend allows max 2 req/sec — throttle to avoid rate limit errors
+    // when multiple messages are due at the same time.
+    await new Promise((resolve) => setTimeout(resolve, 600));
   }
 }
 

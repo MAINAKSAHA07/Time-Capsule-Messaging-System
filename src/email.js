@@ -16,14 +16,21 @@ async function sendEmail(to, text) {
     return;
   }
 
-  const from = process.env.RESEND_FROM || 'Time Capsule <onboarding@resend.dev>';
+  // NOTE: The Resend SDK does NOT throw on API errors — it returns { data, error }.
+  // We must check the error field and throw manually so the delivery worker
+  // leaves the message as 'pending' instead of wrongly marking it 'delivered'.
+  const from = (process.env.RESEND_FROM || 'Time Capsule <onboarding@resend.dev>').trim();
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from,
     to,
     subject: 'Your time capsule message',
     text
   });
+
+  if (error) {
+    throw new Error(`Resend API error: ${error.message || JSON.stringify(error)}`);
+  }
 }
 
 module.exports = {
