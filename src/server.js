@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const morgan = require('morgan');
+const cors = require('cors');
 
 // Ensure DB is initialized
 require('./db');
@@ -14,6 +15,13 @@ const app = express();
 
 app.use(express.json());
 app.use(morgan('dev'));
+
+// Allow cross-origin API access (for local dev and external clients)
+app.use(
+  cors({
+    origin: '*'
+  })
+);
 
 // Serve minimal frontend for manual testing
 app.use(express.static(require('path').join(__dirname, '..', 'public')));
