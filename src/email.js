@@ -1,39 +1,46 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-let resend = null;
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 
-if (!process.env.RESEND_API_KEY) {
+let transporter = null;
+
+if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
   // eslint-disable-next-line no-console
-  console.warn('RESEND_API_KEY not set. Email delivery is disabled.');
+  console.warn('GMAIL_USER or GMAIL_APP_PASSWORD not set. Email delivery is disabled.');
 } else {
-  resend = new Resend(process.env.RESEND_API_KEY);
+  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: GMAIL_USER,
+      pass: GMAIL_APP_PASSWORD  // Gmail App Password (not your regular password)
+    }
+  });
 }
 
 async function sendEmail(to, text) {
-  if (!resend) {
+  if (!transporter) {
     // eslint-disable-next-line no-console
     console.log(`[Email disabled] Would send to ${to}: ${text}`);
     return;
   }
 
-  // NOTE: The Resend SDK does NOT throw on API errors — it returns { data, error }.
-  // We must check the error field and throw manually so the delivery worker
-  // leaves the message as 'pending' instead of wrongly marking it 'delivered'.
-  const from = (process.env.RESEND_FROM || 'Time Capsule <onboarding@resend.dev>').trim();
-
-  const { error } = await resend.emails.send({
-    from,
+  await transporter.sendMail({
+    from: `"Time Capsule" <${GMAIL_USER}>`,
     to,
-    subject: 'Your time capsule message',
-    text
+    subject: 'Your time capsule message has arrived! 📬',
+    text,
+    html: `
+      <div style="font-family: sans-serif; max-width: 520px; margin: auto; background: #0f172a; color: #e5e7eb; border-radius: 12px; padding: 32px;">
+        <h2 style="color: #38bdf8; margin-top: 0;">📬 A message from the past</h2>
+        <p style="font-size: 1rem; line-height: 1.6; white-space: pre-wrap;">${text}</p>
+        <hr style="border-color: #334155; margin: 24px 0;" />
+        <p style="font-size: 0.75rem; color: #64748b;">Delivered by Time Capsule Messaging System</p>
+      </div>
+    `
   });
-
-  if (error) {
-    throw new Error(`Resend API error: ${error.message || JSON.stringify(error)}`);
-  }
 }
 
 module.exports = {
   sendEmail
 };
-
