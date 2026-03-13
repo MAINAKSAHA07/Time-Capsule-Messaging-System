@@ -39,15 +39,22 @@ async function deliverDueMessagesOnce() {
   `);
 
   const dueMessages = selectStmt.all(nowIso);
+  if (dueMessages.length > 0) {
+    // eslint-disable-next-line no-console
+    console.log('[Delivery] Found', dueMessages.length, 'due message(s), attempting send...');
+  }
 
   for (const msg of dueMessages) {
     try {
       await sendEmail(msg.recipient_email, msg.message);
       updateStmt.run(nowIso, msg.id);
       logDelivery(msg);
+      // eslint-disable-next-line no-console
+      console.log('[Delivery] Message', msg.id, 'delivered to', msg.recipient_email);
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('Failed to send email for message', msg.id, err);
+      console.error('[Delivery] Failed message', msg.id, 'to', msg.recipient_email, ':', err.message);
+      if (err.response) console.error('[Delivery] SMTP response:', err.response);
       // Leave as pending so it can be retried on the next cycle.
     }
     // Throttle when many messages are due at once to avoid SMTP rate limits

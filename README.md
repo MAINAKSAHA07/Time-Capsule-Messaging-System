@@ -28,8 +28,8 @@ Backend service that lets users schedule messages to be "delivered" at a future 
    ```
 
    - **JWT_SECRET**: Use a strong random string (e.g. `openssl rand -hex 32`). Do not use a JWT token or a guessable value.
-   - **GMAIL_USER** / **GMAIL_APP_PASSWORD**: For email delivery. Enable 2FA on the Google account, then create an [App Password](https://support.google.com/accounts/answer/185833) and put the 16-character value in `GMAIL_APP_PASSWORD`.
-   - Never commit `.env` or real secrets to git. If `.env` was ever committed, rotate all secrets (new JWT_SECRET, new Gmail App Password) and consider purging history (e.g. `git filter-repo`).
+   - **RESEND_API_KEY** (or **RESEND_API**): For email delivery via [Resend](https://resend.com). Get your API key from the Resend dashboard. Optional **RESEND_FROM** (e.g. `Time Capsule <onboarding@resend.dev>`).
+   - Never commit `.env` or real secrets to git. If `.env` was ever committed, rotate all secrets and consider purging history (e.g. `git filter-repo`).
 
 3. **Run the server**
 
@@ -164,7 +164,7 @@ Authorization: Bearer JWT_TOKEN_HERE
      - `NODE_ENV=production`
      - `PORT=10000` (or leave to Render’s default; the app uses `PORT` if provided)
      - `JWT_SECRET=` (use a strong random string, e.g. `openssl rand -hex 32` — not a JWT token)
-     - `GMAIL_USER=` and `GMAIL_APP_PASSWORD=` (Gmail 2FA + App Password for email delivery)
+     - `RESEND_API_KEY=` (or `RESEND_API=`) and optionally `RESEND_FROM=` (Resend.com)
      - Optionally:
        - `DELIVERY_INTERVAL_MS=30000`
        - `LOG_DIR=/var/log/timecapsule` (or another writable path)
