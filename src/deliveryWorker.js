@@ -50,8 +50,7 @@ async function deliverDueMessagesOnce() {
       console.error('Failed to send email for message', msg.id, err);
       // Leave as pending so it can be retried on the next cycle.
     }
-    // Resend allows max 2 req/sec — throttle to avoid rate limit errors
-    // when multiple messages are due at the same time.
+    // Throttle when many messages are due at once to avoid SMTP rate limits
     await new Promise((resolve) => setTimeout(resolve, 600));
   }
 }
@@ -65,6 +64,8 @@ function startDeliveryWorker(options = {}) {
     console.error('Initial delivery run failed:', err);
   });
 
+  // Polling heartbeat: we do NOT use per-message setTimeout/setInterval for long delays.
+  // We re-query the DB every intervalMs to find due messages; this survives restarts.
   setInterval(() => {
     deliverDueMessagesOnce().catch((err) => {
       // eslint-disable-next-line no-console

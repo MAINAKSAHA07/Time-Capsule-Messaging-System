@@ -3,6 +3,18 @@ const db = require('./db');
 
 const router = express.Router();
 
+// Basic email format validation (RFC 5322 simplified)
+function isValidEmail(str) {
+  if (!str || typeof str !== 'string') return false;
+  const trimmed = str.trim();
+  const at = trimmed.indexOf('@');
+  if (at <= 0 || at === trimmed.length - 1) return false;
+  const local = trimmed.slice(0, at);
+  const domain = trimmed.slice(at + 1);
+  if (!/^[^\s@]+$/.test(local) || !domain.includes('.')) return false;
+  return trimmed.length <= 254;
+}
+
 // Helper to validate ISO datetime and ensure it's in the future
 function parseAndValidateFutureDate(isoString) {
   if (!isoString || typeof isoString !== 'string') return { ok: false, error: 'deliver_at is required' };
@@ -27,6 +39,11 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'recipient_email is required' });
   }
 
+  const normalizedRecipient = recipient_email.trim();
+  if (!isValidEmail(normalizedRecipient)) {
+    return res.status(400).json({ error: 'recipient_email must be a valid email address' });
+  }
+
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'message is required' });
   }
@@ -39,8 +56,6 @@ router.post('/', (req, res) => {
   if (!parsed.ok) {
     return res.status(400).json({ error: parsed.error });
   }
-
-  const normalizedRecipient = recipient_email.trim();
 
   const stmt = db.prepare(`
     INSERT INTO messages (user_id, recipient_email, message, deliver_at, status)

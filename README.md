@@ -21,16 +21,15 @@ Backend service that lets users schedule messages to be "delivered" at a future 
 
 2. **Create environment file**
 
-   In the project root, create a `.env` file:
+   Copy `.env.example` to `.env` and fill in real values:
 
    ```bash
-   PORT=3000
-   JWT_SECRET=change-me-to-a-long-random-string
-   # Optional overrides:
-   # DB_PATH=/data/timecapsule.db
-   # DELIVERY_INTERVAL_MS=30000
-   # LOG_DIR=./logs
+   cp .env.example .env
    ```
+
+   - **JWT_SECRET**: Use a strong random string (e.g. `openssl rand -hex 32`). Do not use a JWT token or a guessable value.
+   - **GMAIL_USER** / **GMAIL_APP_PASSWORD**: For email delivery. Enable 2FA on the Google account, then create an [App Password](https://support.google.com/accounts/answer/185833) and put the 16-character value in `GMAIL_APP_PASSWORD`.
+   - Never commit `.env` or real secrets to git. If `.env` was ever committed, rotate all secrets (new JWT_SECRET, new Gmail App Password) and consider purging history (e.g. `git filter-repo`).
 
 3. **Run the server**
 
@@ -91,6 +90,7 @@ Authorization: Bearer JWT_TOKEN_HERE
   ```
 
 - Constraints:
+  - `recipient_email` must be a valid email address (format validated).
   - `deliver_at` must be a valid ISO datetime **in the future**.
   - `message` max length: **500 characters**.
   - Messages cannot be edited after creation (no update endpoint).
@@ -130,7 +130,7 @@ Authorization: Bearer JWT_TOKEN_HERE
       [2026-02-20T15:30:00Z] Delivered message 123 to recipient@example.com
       ```
 
-- Because the worker uses only the database state (no in-memory schedule), it continues to work correctly across server restarts and does not rely on `setTimeout` for long delays.
+- Because the worker uses only the database state (no in-memory schedule), it continues to work correctly across server restarts and does not rely on `setTimeout` for long delays. Delivery is driven by a **polling heartbeat** (re-query DB every interval), not per-message timers.
 
 ### Health Check
 
@@ -163,7 +163,8 @@ Authorization: Bearer JWT_TOKEN_HERE
    - **Environment Variables**:
      - `NODE_ENV=production`
      - `PORT=10000` (or leave to Render’s default; the app uses `PORT` if provided)
-     - `JWT_SECRET=` (set to a long random string)
+     - `JWT_SECRET=` (use a strong random string, e.g. `openssl rand -hex 32` — not a JWT token)
+     - `GMAIL_USER=` and `GMAIL_APP_PASSWORD=` (Gmail 2FA + App Password for email delivery)
      - Optionally:
        - `DELIVERY_INTERVAL_MS=30000`
        - `LOG_DIR=/var/log/timecapsule` (or another writable path)
@@ -175,7 +176,11 @@ Authorization: Bearer JWT_TOKEN_HERE
    - Set `DB_PATH` to a file inside that mount, e.g. `/var/data/timecapsule.db`.
    - This ensures your scheduled messages survive redeploys and restarts.
 
-5. **Accessing the deployed API**
+5. **Render free tier note**
+
+   Free tier services **sleep after ~15 minutes of inactivity**. When the service wakes up, the delivery worker runs on startup and catches up on any due messages, so deliveries may be a few minutes late after idle periods.
+
+6. **Accessing the deployed API**
 
    - Once Render finishes deploying, it will provide a public URL like:
      - `https://your-service-name.onrender.com`
